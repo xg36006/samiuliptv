@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>Samiul IPTV</title>
+
+<script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:Arial,sans-serif;
+}
+
+body{
+background:#000;
+color:white;
+overflow-x:hidden;
+}
+
+/* HEADER */
+
+.header{
+background:#000;
+padding:14px;
+text-align:center;
+border-top:3px solid red;
+border-bottom:3px solid red;
+}
+
+.header h1{
+font-size:36px;
+color:#ff1a1a;
+text-shadow:0 0 15px red;
+}
+
+/* PLAYER */
+
+.player-box{
+position:relative;
+width:100%;
+background:black;
+}
+
+video{
+width:100%;
+height:250px;
+background:black;
+object-fit:contain;
+}
+
+/* CONTROLS */
+
+.custom-controls{
+
+position:absolute;
+top:50%;
+left:50%;
+
+transform:translate(-50%,-50%);
+
+display:flex;
+gap:15px;
+
+z-index:999;
+transition:.4s;
+
+}
+
+.control-btn{
+
+width:58px;
+height:58px;
+
+border:none;
+border-radius:50%;
+
+background:red;
+color:white;
+
+font-size:22px;
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+cursor:pointer;
+
+box-shadow:
+0 0 15px rgba(255,0,0,.6);
+
+}
+
+/* SEARCH */
+
+.search-box{
+padding:14px;
+}
+
+.search-box input{
+
+width:100%;
+padding:16px;
+
+font-size:20px;
+
+border:none;
+outline:none;
+
+border-radius:18px;
+
+background:#111;
+color:white;
+
+}
+
+/* CHANNEL GRID */
+
+.channel-grid{
+
+display:grid;
+grid-template-columns:repeat(3,1fr);
+
+gap:12px;
+padding:12px;
+
+}
+
+/* CHANNEL */
+
+.channel{
+
+background:white;
+
+border-radius:20px;
+
+padding:8px;
+
+height:92px;
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+cursor:pointer;
+
+border:2px solid #00cfff;
+
+box-shadow:
+0 0 12px rgba(0,207,255,.5);
+
+transition:.3s;
+
+}
+
+.channel:hover{
+transform:scale(1.03);
+}
+
+.channel img{
+
+width:100%;
+height:100%;
+object-fit:contain;
+
+}
+
+/* ACTIVE */
+
+.active{
+
+border:3px solid #00ff84 !important;
+
+box-shadow:
+0 0 18px #00ff84,
+0 0 28px rgba(0,255,132,.8);
+
+}
+
+/* LIVE COUNTER */
+
+.live-counter{
+
+position:fixed;
+
+left:15px;
+bottom:95px;
+
+z-index:99999;
+
+background:rgba(0,0,0,.80);
+
+padding:12px 16px;
+
+border-radius:18px;
+
+font-size:16px;
+font-weight:bold;
+
+color:white;
+
+backdrop-filter:blur(10px);
+
+box-shadow:
+0 0 14px rgba(0,255,100,.5);
+
+opacity:1;
+
+transition:.4s;
+
+}
+
+/* CONTACT */
+
+.contact-title{
+
+text-align:center;
+
+font-size:22px;
+font-weight:bold;
+
+margin-top:25px;
+margin-bottom:18px;
+
+color:white;
+
+text-shadow:
+0 0 10px red;
+
+}
+
+.social-box{
+
+display:flex;
+justify-content:center;
+gap:25px;
+
+padding-bottom:25px;
+
+}
+
+.social-box a{
+
+width:65px;
+height:65px;
+
+border-radius:50%;
+
+display:flex;
+justify-content:center;
+align-items:center;
+
+font-size:34px;
+
+text-decoration:none;
+color:white;
+
+}
+
+.telegram{
+background:#229ED9;
+}
+
+.facebook{
+background:#1877F2;
+}
+
+/* FOOTER */
+
+.footer{
+
+text-align:center;
+
+padding:20px;
+
+font-size:22px;
+font-weight:bold;
+
+border-top:2px solid red;
+
+}
+
+.footer span{
+color:red;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<!-- HEADER -->
+
+<div class="header">
+
+<h1>Samiul IPTV</h1>
+
+</div>
+
+<!-- LIVE COUNTER -->
+
+<div class="live-counter">
+
+🟢 Live Users :
+<span id="liveUsers">0</span>
+
+<br>
+
+👁 Total Views :
+<span id="totalViews">0</span>
+
+</div>
+
+<!-- PLAYER -->
+
+<div class="player-box">
+
+<video id="video"
+autoplay
+playsinline
+controls>
+
+</video>
+
+<!-- CONTROLS -->
+
+<div class="custom-controls">
+
+<button class="control-btn"
+onclick="prevChannel()">
+
+⏮
+
+</button>
+
+<button class="control-btn"
+onclick="togglePlay()">
+
+⏯
+
+</button>
+
+<button class="control-btn"
+onclick="nextChannel()">
+
+⏭
+
+</button>
+
+</div>
+
+</div>
+
+<!-- SEARCH -->
+
+<div class="search-box">
+
+<input type="text"
+
+id="search"
+
+placeholder="Search Channel..."
+
+onkeyup="searchChannels()">
+
+</div>
+
+<!-- CHANNELS -->
+
+<div class="channel-grid"
+id="channelGrid">
+
+</div>
+
+<!-- CONTACT -->
+
+<h2 class="contact-title">
+
+আমার টিভি সম্পর্কে মতামত জানাতে
+
+</h2>
+
+<div class="social-box">
+
+<a href="https://t.me/sh_shamiul"
+target="_blank"
+class="telegram">
+
+<i class="fab fa-telegram-plane"></i>
+
+</a>
+
+<a href="https://www.facebook.com/sh.shamiul"
+target="_blank"
+class="facebook">
+
+<i class="fab fa-facebook-f"></i>
+
+</a>
+
+</div>
+
+<!-- FOOTER -->
+
+<div class="footer">
+
+© 2026 <span>SAMIUL IPTV</span>
+
+</div>
+
+<script>
+
+/* PLAYLIST */
+
+const playlist =
+'https://raw.githubusercontent.com/Rakib49/Rakibiptv/refs/heads/main/aynaott.m3u';
+
+let channels = [];
+let currentIndex = 0;
+
+/* LOAD PLAYLIST */
+
+fetch(playlist)
+
+.then(r=>r.text())
+
+.then(data=>{
+
+const lines =
+data.split('\n');
+
+for(let i=0;i<lines.length;i++){
+
+if(lines[i].startsWith('#EXTINF')){
+
+const info = lines[i];
+const url = lines[i+1];
+const name = info.split(',')[1];
+
+let logo='';
+
+const match =
+info.match(/tvg-logo="(.*?)"/);
+
+if(match){
+logo=match[1];
+}
+
+channels.push({
+name,
+url,
+logo
+});
+
+}
+
+}
+
+renderChannels();
+
+if(channels.length>0){
+playChannel(0);
+}
+
+});
+
+/* RENDER */
+
+function renderChannels(){
+
+const grid =
+document.getElementById('channelGrid');
+
+grid.innerHTML='';
+
+channels.forEach((ch,index)=>{
+
+const div =
+document.createElement('div');
+
+div.className='channel';
+
+div.innerHTML=`
+
+<img src="${ch.logo}">
+
+`;
+
+div.onclick=()=>playChannel(index);
+
+grid.appendChild(div);
+
+});
+
+}
+
+/* PLAY */
+
+function playChannel(index){
+
+currentIndex=index;
+
+const video =
+document.getElementById('video');
+
+const channel =
+channels[index];
+
+if(Hls.isSupported()){
+
+const hls =
+new Hls();
+
+hls.loadSource(channel.url);
+
+hls.attachMedia(video);
+
+hls.on(
+Hls.Events.MANIFEST_PARSED,
+function(){
+
+video.play();
+
+});
+
+}
+
+else{
+
+video.src=channel.url;
+video.play();
+
+}
+
+document.querySelectorAll('.channel')
+.forEach(el=>{
+
+el.classList.remove('active');
+
+});
+
+document.querySelectorAll('.channel')[index]
+.classList.add('active');
+
+}
+
+/* NEXT */
+
+function nextChannel(){
+
+currentIndex++;
+
+if(currentIndex>=channels.length){
+
+currentIndex=0;
+
+}
+
+playChannel(currentIndex);
+
+}
+
+/* PREV */
+
+function prevChannel(){
+
+currentIndex--;
+
+if(currentIndex<0){
+
+currentIndex=
+channels.length-1;
+
+}
+
+playChannel(currentIndex);
+
+}
+
+/* PLAY PAUSE */
+
+function togglePlay(){
+
+const video =
+document.getElementById('video');
+
+if(video.paused){
+
+video.play();
+
+}
+
+else{
+
+video.pause();
+
+}
+
+}
+
+/* SEARCH */
+
+function searchChannels(){
+
+const input =
+document.getElementById('search')
+.value.toLowerCase();
+
+const cards =
+document.querySelectorAll('.channel');
+
+channels.forEach((ch,index)=>{
+
+if(ch.name.toLowerCase()
+.includes(input)){
+
+cards[index]
+.style.display='flex';
+
+}
+
+else{
+
+cards[index]
+.style.display='none';
+
+}
+
+});
+
+}
+
+/* AUTO HIDE */
+
+const controls =
+document.querySelector('.custom-controls');
+
+const visitor =
+document.querySelector('.live-counter');
+
+function showUI(){
+
+controls.style.opacity='1';
+visitor.style.opacity='1';
+
+setTimeout(()=>{
+
+controls.style.opacity='0';
+visitor.style.opacity='0';
+
+},10000);
+
+}
+
+showUI();
+
+document.querySelector('.player-box')
+.addEventListener('click',()=>{
+
+showUI();
+
+});
+
+</script>
+
+<!-- FIREBASE -->
+
+<script type="module">
+
+import { initializeApp }
+from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
+
+import {
+
+getDatabase,
+ref,
+set,
+get,
+onValue,
+onDisconnect
+
+}
+
+from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
+
+const firebaseConfig = {
+
+apiKey:
+"AIzaSyA2L1dayNYWlDz6dKc3a_N0eoyDaLSlPj0",
+
+authDomain:
+"rakib-iptv.firebaseapp.com",
+
+databaseURL:
+"https://rakib-iptv-default-rtdb.asia-southeast1.firebasedatabase.app",
+
+projectId:
+"rakib-iptv",
+
+storageBucket:
+"rakib-iptv.firebasestorage.app",
+
+messagingSenderId:
+"299021620847",
+
+appId:
+"1:299021620847:web:20e1cd003d9c6ced815f9a"
+
+};
+
+const app =
+initializeApp(firebaseConfig);
+
+const db =
+getDatabase(app);
+
+/* UNIQUE USER */
+
+const userId =
+Date.now() + "_" +
+Math.random().toString(36).substring(2,8);
+
+const userRef =
+ref(db,'liveUsers/'+userId);
+
+/* USER ONLINE */
+
+set(userRef,{
+online:true,
+time:Date.now()
+});
+
+/* AUTO REMOVE */
+
+onDisconnect(userRef).remove();
+
+/* LIVE USERS */
+
+onValue(ref(db,'liveUsers'),
+(snapshot)=>{
+
+const data =
+snapshot.val();
+
+const count =
+data ? Object.keys(data).length : 0;
+
+document.getElementById('liveUsers')
+.innerText = count;
+
+});
+
+/* TOTAL VIEWS */
+
+const totalRef =
+ref(db,'totalViews');
+
+/* COUNT VIEW */
+
+if(!localStorage.getItem('viewed')){
+
+get(totalRef).then((snapshot)=>{
+
+let total =
+snapshot.val() || 0;
+
+total++;
+
+set(totalRef,total);
+
+localStorage.setItem('viewed','yes');
+
+});
+
+}
+
+/* SHOW TOTAL */
+
+onValue(totalRef,(snapshot)=>{
+
+const total =
+snapshot.val() || 0;
+
+document.getElementById('totalViews')
+.innerText = total;
+
+});
+
+</script>
+
+</body>
+</html>
